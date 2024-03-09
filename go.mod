@@ -1,3 +1,3 @@
-module github.com/puzhaling/goraga
+module github.com/puzhaling/kirin
 
 go 1.22.0
