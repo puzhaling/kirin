@@ -2,65 +2,54 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"log"
-	"net"
 	"net/http"
+	"encoding/json"
+	"io/ioutil"
 	"time"
-	"io"
-	"context"
+	"log"
 )
 
-func main() {
-	const name string = "goraga"
-	log.SetPrefix(name + ":  ")
-
-	if len(os.Args) != 2 {
-		log.Fatal("no url specified")
-	}
-
-	hostname := os.Args[1]
-	ips, err := net.LookupIP(hostname)
-
-	if err != nil {
-		log.Fatalf("lookup is: %s: %v", hostname, err)
-	}
-	if len(ips) == 0 {
-		log.Fatalf("no ips found for %s", hostname)
-	}
-
-	c := http.Client{Timeout: time.Second*5}
-	
-	url := "http://" + hostname
-	if err := downloadAndSave(context.TODO(), &c, url); err != nil {
-		log.Fatal(err)
-	}
+type Search struct {
+	Version int32 				`json: "version"`
+	Key string	  				`json: "key"`
+	Type string				    `json: "type"`
+	Rank int32					`json: "rank"`
+	LocalizedName string		`json: "localizedName"`
+	Country struct {
+		LocalizedName string	`json: "County.LocalizedName"`
+	}							`json: "Country"`
+	AdministrativeArea struct {
+		ID string				`json: "AdministrativeArea.ID"`
+		LocalizedName string	`json: "AdministrativeArea.LocalizedName"`
+	}						    `json: "AdministrativeArea"`
 }
 
-func downloadAndSave(ctx context.Context, c *http.Client, url string) error {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return fmt.Errorf("creating request: GET %q: %v", url, err)
-	}
-	resp, err := c.Do(req)
+func (s *Search) Print() {
+	fmt.Println("LocalizedName: ", s.LocalizedName)
+	fmt.Println("Key: ", s.Key)
+	fmt.Println()
+}
 
+func main() {
+	client := &http.Client {
+		Timeout: time.Second*10,
+	}
+
+	apikey := "p8C9PIGpwqgUzbwc3KV9iCr68PFINML3"
+	q := "Moscow"
+	URL := "http://dataservice.accuweather.com/locations/v1/cities/autocomplete?apikey="+apikey+"&q="+q
+
+	resp, err := client.Get(URL)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		log.Fatal("redirect function fail / HTTP response fail")
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("response status: %s", resp.Status)
-	}
-	
-	dstPath := "./index.html"
-	dstFile, err := os.Create(dstPath)
-	if err != nil {
-		return fmt.Errorf("creating file %v", err)
-	}
-	defer dstFile.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	var searches []Search
+	err = json.Unmarshal(body, &searches)
 
-	io.Copy(dstFile, resp.Body)
-
-	return nil
+	for _, i := range searches {
+		i.Print()
+	}
 }
