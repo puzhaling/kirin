@@ -5,6 +5,7 @@ import (
 	"time"
 	"log"
 	"os"
+	"strings"
 	"io/ioutil"
 	"net/http"
 	"encoding/json"
@@ -12,6 +13,23 @@ import (
 	"github.com/puzhaling/kirin/backends"
 )
 
+func getLocationKey(city, country string, searches []backends.Search) (string, error) {
+	for _, s := range searches {
+		if s.LocalizedName == city && s.Country.LocalizedName == country {
+			return s.Key, nil
+		}
+	}
+	return "", fmt.Errorf("unable to find %q city in %q country", city, country)
+}
+
+func parseArguments() (string, string) {
+	args := os.Args[1:]
+
+	city, _ := strings.CutSuffix(args[0], ",")
+	country := args[1]
+
+	return city, country
+}
 
 // command syntax: kirin City{,} Country
 func main() {
@@ -19,39 +37,36 @@ func main() {
 		Timeout: time.Second*10,
 	}
 
-	args := os.Args[1:]
-	if len(args) != 2 {
+	if len(os.Args[1:]) != 2 {
 		log.Fatalf("invalid syntax: command syntax: kirin City{,} Country")
 	}
-	name := args[0]
-	country := args[1]
+	city, country := parseArguments()
 
 	apikey := "Qk2u387CuUWAKibhWIcqmDm3xDKbaw4t"
-	URL := "http://dataservice.accuweather.com/locations/v1/cities/autocomplete?apikey="+apikey+"&q="+name
+	URL := "http://dataservice.accuweather.com/locations/v1/cities/autocomplete?apikey="+apikey+"&q="+city
 
 	resp, err := client.Get(URL)
 	if err != nil {
 		log.Fatal("redirect function fail / HTTP response fail")
 	}
+	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		log.Fatal("recieved non-200 response status code:", resp.StatusCode)
+	}
+
+	jsonStr, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	var searches []backends.Search
-	err = json.Unmarshal(body, &searches)
+	err = json.Unmarshal(jsonStr, &searches)
 
-
-	var searchIdx int
-	for idx, search := range searches {
-		if search.LocalizedName == name && search.Country.LocalizedName == country {
-			searchIdx = idx
-			//break
-		}
-		search.Print()
+	locKey, err := getLocationKey(city, country, searches)
+	if err != nil {
+		log.Fatalf("location key error: %v", err)
 	}
 
-
-	URL = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/"+searches[searchIdx].Key+"?apikey="+apikey
+	URL = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/"+locKey+"?apikey="+apikey
 
 	var weather backends.Weather
 
@@ -59,15 +74,13 @@ func main() {
 	if err != nil {
 		log.Fatal("redirect function fail / HTTP response fail")
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		body, err = ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
+		jsonStr, err = ioutil.ReadAll(resp.Body)
 
-		if json.Valid([]byte(body)) {
-			fmt.Println("json is valid")
-
-			err = json.Unmarshal([]byte(body), &weather)
+		if json.Valid([]byte(jsonStr)) {
+			err = json.Unmarshal([]byte(jsonStr), &weather)
 			if err != nil {
 				log.Fatalf("json encoding fail: %v", err)
 			}
