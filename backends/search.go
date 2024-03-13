@@ -1,6 +1,6 @@
-package search
+package backends
 
-import "json"
+import "fmt"
 
 type Country struct {
 	LocalizedName	string	`json:"LocalizedName"`
@@ -19,4 +19,12 @@ type Search struct {
 	LocalizedName 			string				`json:"LocalizedName"`
 	Country 				Country				`json:"Country"`
 	AdministrativeArea 		AdministrativeArea 	`json:"AdministrativeArea"`
+}
+
+
+func (s *Search) Print() {
+	fmt.Println("LocalizedName: ", s.LocalizedName)
+	fmt.Println("Key: ", s.Key)
+	fmt.Println("Country: ", s.Country.LocalizedName)
+	fmt.Println()
 }

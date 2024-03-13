@@ -1,6 +1,6 @@
-package weather
+package backends
 
-import "json"
+import "fmt"
 
 type Headline struct {
 	EffectiveDate 		string		`json:"EffectiveDate"`
@@ -60,3 +60,13 @@ type Weather struct {
 	Headline 	   Headline 	   `json:"Headline"`
 	DailyForecasts []DailyForecast `json:"DailyForecasts"`
 }	
+
+
+func (w Weather) Print() {
+	fmt.Println(w.Headline.EffectiveDate)
+	fmt.Println(w.Headline.EffectiveDate)
+	fmt.Println(w.Headline.EffectiveDate)
+	fmt.Println(w.Headline.Text)
+	fmt.Println(w.DailyForecasts[0].Temperature.Minimum.Value, "F")
+ 	fmt.Println(w.DailyForecasts[0].Temperature.Maximum.Value, "F")
+}
