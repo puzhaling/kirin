@@ -31,18 +31,33 @@ func parseArguments() (string, string) {
 	return city, country
 }
 
-// command syntax: kirin City{,} Country
 func main() {
 	client := &http.Client {
 		Timeout: time.Second*10,
 	}
 
-	if len(os.Args[1:]) != 2 {
-		log.Fatalf("invalid syntax: command syntax: kirin City{,} Country")
-	}
-	city, country := parseArguments()
+	var city, country string = "", ""
 
-	apikey := "Qk2u387CuUWAKibhWIcqmDm3xDKbaw4t"
+	if len(os.Args[1:]) == 0 {
+		for {
+			fmt.Print("Weather for city: ")
+			n, err := fmt.Scanf("%s %s", &city, &country)
+
+			if err != nil {
+				log.Printf("scanning error: %v", err)
+			} else if err == nil && n == 2 {
+				city, _ = strings.CutSuffix(city, ",")
+				break
+			} else {
+				log.Println("invalid syntax")
+			}
+		}
+	} else {
+		city, country = parseArguments()
+	}
+
+
+	apikey := "bqnKx5VQLTPEUTFuCSLbmiz6XLFl9KVO"
 	URL := "http://dataservice.accuweather.com/locations/v1/cities/autocomplete?apikey="+apikey+"&q="+city
 
 	resp, err := client.Get(URL)
@@ -89,5 +104,5 @@ func main() {
 		log.Fatal("recieved non-200 response status code:", resp.StatusCode)
 	}
 
-	weather.Print()
+	weather.Echo()
 }

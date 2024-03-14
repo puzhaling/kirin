@@ -61,12 +61,15 @@ type Weather struct {
 	DailyForecasts []DailyForecast `json:"DailyForecasts"`
 }	
 
+func toCelc(t float32) int32 {
+	tint := int32(t)
+	return ((tint-32)*5)/9
+}
 
-func (w Weather) Print() {
-	fmt.Println(w.Headline.EffectiveDate)
-	fmt.Println(w.Headline.EffectiveDate)
-	fmt.Println(w.Headline.EffectiveDate)
-	fmt.Println(w.Headline.Text)
-	fmt.Println(w.DailyForecasts[0].Temperature.Minimum.Value, "F")
- 	fmt.Println(w.DailyForecasts[0].Temperature.Maximum.Value, "F")
+func (w Weather) Echo() {
+	fmt.Println("Brief desc:", w.Headline.Text)
+	fmt.Printf("Temperature range: %v℃ -%v℃", 
+		toCelc(w.DailyForecasts[0].Temperature.Minimum.Value), 
+		toCelc(w.DailyForecasts[0].Temperature.Maximum.Value))
+	fmt.Println()
 }
