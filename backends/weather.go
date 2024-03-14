@@ -68,8 +68,11 @@ func toCelc(t float32) int32 {
 
 func (w Weather) Echo() {
 	fmt.Println("Brief desc:", w.Headline.Text)
-	fmt.Printf("Temperature range: %v℃ -%v℃", 
+	fmt.Printf("Temperature range: %v℃ -%v℃\n", 
 		toCelc(w.DailyForecasts[0].Temperature.Minimum.Value), 
 		toCelc(w.DailyForecasts[0].Temperature.Maximum.Value))
-	fmt.Println()
+	fmt.Println("Daytime info:")
+	fmt.Printf("\tStatus: %v\n\tHas precipitation: %t\n", w.DailyForecasts[0].Day.IconPhrase, w.DailyForecasts[0].Day.HasPrecipitation)
+	fmt.Println("Nightime info:")
+	fmt.Printf("\tStatus: %v\n\tHas precipitation: %t\n", w.DailyForecasts[0].Night.IconPhrase, w.DailyForecasts[0].Night.HasPrecipitation)
 }
